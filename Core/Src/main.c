@@ -55,22 +55,28 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-extern USBD_HandleTypeDef hUsbDeviceFS;
 
-typedef struct
+void SendCode(const uint8_t code)
 {
-	uint8_t MODIFIER;
-	uint8_t RESERVED;
-	uint8_t KEYCODE1;
-	uint8_t KEYCODE2;
-	uint8_t KEYCODE3;
-	uint8_t KEYCODE4;
-	uint8_t KEYCODE5;
-	uint8_t KEYCODE6;
-} keyboardHID;
+	typedef struct
+	{
+		uint8_t MODIFIER;
+		uint8_t RESERVED;
+		uint8_t KEYCODE1;
+		uint8_t KEYCODE2;
+		uint8_t KEYCODE3;
+		uint8_t KEYCODE4;
+		uint8_t KEYCODE5;
+		uint8_t KEYCODE6;
+	} keyboardHID;
 
-keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
+	static keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
+	extern USBD_HandleTypeDef hUsbDeviceFS;
 
+	keyboardhid.KEYCODE1 = code;  // press 'caps lock'
+	USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&keyboardhid, sizeof (keyboardhid));
+	HAL_Delay (50);
+}
 
 /* USER CODE END 0 */
 
@@ -117,17 +123,14 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	 if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 0)
 	 {
+
+		 SendCode(0x39); // press 'caps lock'
 		 while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 0)
 		 {
-			 HAL_Delay (50);
+			 HAL_Delay (10);
 		 }
 
-		 keyboardhid.KEYCODE1 = 0x39;  // press 'caps lock'
-		 USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&keyboardhid, sizeof (keyboardhid));
-		 HAL_Delay (50);
-
-		 keyboardhid.KEYCODE1 = 0x00;  // release key
-		 USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&keyboardhid, sizeof (keyboardhid));
+		 SendCode(0x00); // release key
 	 }
 
   }
